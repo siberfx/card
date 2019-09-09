@@ -72,7 +72,7 @@ If you're using npm, you can install card.js with:
     npm install --save card
 
 	var $ = require("jquery");
-    // The current card.js code does not explictly require jQuery, but instead uses the global, so this line is needed.
+    // The current card.js code does not explicitly require jQuery, but instead uses the global, so this line is needed.
     window.jQuery = $;
     var card = require("card");
 
@@ -199,9 +199,13 @@ $('form').card({
 
 Card has wrappers that make it easy to use with other javascript libraries:
 
-### Angular (1.x Currently)
+### Angular 1.x
 
 * [angular-card](https://github.com/gavruk/angular-card)
+
+### Angular 2+
+
+* [ngx-card](https://github.com/ihym/ngx-card)
 
 ### Ember
 
@@ -211,6 +215,7 @@ Card has wrappers that make it easy to use with other javascript libraries:
 
 * [react-credit-card](https://github.com/JohnyDays/react-credit-card)
 * [card-react](https://github.com/shatran/card-react)
+* [react-plastic](https://github.com/armsteadj1/react-plastic) - static CSS only version.
 
 ## Development
 
