@@ -21,7 +21,10 @@ class Card
               '<div class="jp-card-logo jp-card-maestro">Maestro</div>' +
               '<div class="jp-card-logo jp-card-amex"></div>' +
               '<div class="jp-card-logo jp-card-discover">discover</div>' +
+              '<div class="jp-card-logo jp-card-unionpay">UnionPay</div>' +
               '<div class="jp-card-logo jp-card-dinersclub"></div>' +
+              '<div class="jp-card-logo jp-card-hipercard">Hipercard</div>' +
+              '<div class="jp-card-logo jp-card-troy">troy</div>' +
               '<div class="jp-card-logo jp-card-dankort"><div class="dk"><div class="d"></div><div class="k"></div></div></div>' +
               '<div class="jp-card-logo jp-card-jcb">' +
                 '<div class="j">J</div>' +
@@ -51,14 +54,17 @@ class Card
     'jp-card-dankort',
     'jp-card-dinersclub',
     'jp-card-discover',
+    'jp-card-unionpay',
     'jp-card-jcb',
     'jp-card-laser',
     'jp-card-maestro',
     'jp-card-mastercard',
+    'jp-card-troy',
     'jp-card-unionpay',
     'jp-card-visa',
     'jp-card-visaelectron',
-    'jp-card-elo'
+    'jp-card-elo',
+    'jp-card-hipercard'
   ]
   defaults:
     formatting: true
@@ -161,7 +167,9 @@ class Card
       filters: numberInputFilters
     QJ.on @$numberInput, 'payment.cardType', @handle('setCardType')
 
-    expiryFilters = [(val) -> val.replace /(\s+)/g, '']
+    expiryFilters = [(val) -> 
+                        if val.length == 1 and val[0] == '0' then '' else val.replace /(\s+)/g, ''
+                    ]
     expiryFilters.push @validToggler('cardExpiry')
 
     bindVal @$expiryInput, @$expiryDisplay,
@@ -181,12 +189,13 @@ class Card
   handleInitialPlaceholders: ->
     for name, selector of @options.formSelectors
       el = this["$#{name}"]
+      el = el[0] if el instanceof NodeList
       if QJ.val(el)
         # if the input has a value, we want to trigger a refresh
         QJ.trigger el, 'paste'
         # set a timeout because `jquery.payment` does the reset of the val
         # in a timeout
-        setTimeout -> QJ.trigger el, 'keyup'
+        do (el) -> setTimeout -> QJ.trigger el, 'keyup'
 
   handle: (fn) ->
     (e) =>
@@ -230,6 +239,8 @@ class Card
   handlers:
     setCardType: ($el, e) ->
       cardType = e.data
+      event = new CustomEvent('card-type-changed', 'detail': e.data)
+      document.dispatchEvent event
       unless QJ.hasClass @$card, cardType
         QJ.removeClass @$card, 'jp-card-unknown'
         QJ.removeClass @$card, @cardTypes.join(' ')
@@ -253,6 +264,10 @@ class Card
 
     outDefaults = (o.textContent for o in out)
 
+    # Set the value on initiation
+    setVal(el, out, outDefaults, opts)
+
+    # Update on Events
     QJ.on el, 'focus', ->
       QJ.addClass out, 'jp-card-focused'
 
@@ -260,25 +275,33 @@ class Card
       QJ.removeClass out, 'jp-card-focused'
 
     QJ.on el, 'keyup change paste', (e) ->
-      val = (QJ.val(elem) for elem in el)
-
-      join = opts.join(val)
-
-      val = val.join(join)
-      val = "" if val == join
-
-      for filter in opts.filters
-        val = filter(val, el, out)
-
-      for outEl, i in out
-        if opts.fill
-          outVal = val + outDefaults[i].substring(val.length)
-        else
-          outVal = val or outDefaults[i]
-
-        outEl.textContent = outVal
+      setVal(el, out, outDefaults, opts)
 
     el
+
+  setVal = (el, out, outDefaults, opts) ->
+    val = (QJ.val(elem) for elem in el)
+
+    join = opts.join(val)
+
+    val = val.join(join)
+    val = "" if val == join
+
+    for filter in opts.filters
+      val = filter(val, el, out)
+
+    for outEl, i in out
+      if opts.fill
+        outVal = val + outDefaults[i].substring(val.length)
+      else
+        outVal = val or outDefaults[i]
+
+      outEl.textContent = outVal
+
+  getCardType: ->
+    ccType = Payment.fns.cardType(@$numberInput[0].value)
+    if ccType then ccType else 'unknown'
+
 
 module.exports = Card
 global.Card = Card
